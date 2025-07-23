@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>My TODO List</title>
 </head>
+
 <body>
     <h1>TODO List</h1>
 
@@ -14,11 +16,18 @@
 
     <ul>
         {% for task in tasks %}
-            <li>{{ task.title }}<a href="{% url 'delete_task' task.id %}" style="color:red;">削除</a>
-            </li>
+        <li>
+            <form action="{% url 'toggle_complete' task.id %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
+            </form>
+            <span {% if task.completed %}style="text-decoration: line-through; color: gray;"{% endif %}>{{ task.title }}</span>
+            <a href="{% url 'delete_task' task.id %}" style="color:red;">削除</a>
+        </li>
         {% empty %}
-            <li>タスクがありません。</li>
+        <li>タスクがありません。</li>
         {% endfor %}
     </ul>
 </body>
+
 </html>
