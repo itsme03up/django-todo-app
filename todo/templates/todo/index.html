@@ -15,10 +15,35 @@
         }
         .message {
             margin-bottom: 8px;
-            padding: 5px 10px;
+            padding: 8px 12px;
             background-color: white;
             border-radius: 15px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .message.own-message {
+            background-color: #007bff;
+            color: white;
+            margin-left: 20%;
+        }
+        .message.other-message {
+            background-color: #e9ecef;
+            margin-right: 20%;
+        }
+        .message.system-message {
+            background-color: #fff3cd;
+            color: #856404;
+            text-align: center;
+            font-style: italic;
+            margin: 5px 0;
+        }
+        .username {
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 2px;
+        }
+        .timestamp {
+            font-size: 0.75em;
+            opacity: 0.7;
         }
         .task-item {
             transition: all 0.3s ease;
@@ -51,14 +76,16 @@
                         <li class="list-group-item task-item d-flex justify-content-between align-items-center" 
                             data-task-id="{{ task.id }}" 
                             data-task-title="{{ task.title|escapejs }}" 
+                            onclick="openTaskChat({{ task.id }}, '{{ task.title|escapejs }}')" 
+                            style="cursor: pointer;">
+                            
+                            <div class="d-flex align-items-center gap-3">
+                                <form method="POST" action="{% url 'toggle_complete' task.id %}" style="margin: 0;" onclick="event.stopPropagation()">
+                                    {% csrf_token %}
                                     <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
                                 </form>
 
                                 <span class="{% if task.completed %}task-completed{% endif %}">
-                                    {{ task.title }}
-                                </span>
-                                <small class="text-muted">💬 Click to chat</small>
-                            </div>
                                     {{ task.title }}
                                 </span>
                                 <small class="text-muted">💬 Click to chat</small>
@@ -76,8 +103,15 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0" id="chat-title">💬 Task Chat</h5>
-                        <small class="text-muted" id="chat-subtitle">Select a task to start chatting</small>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="card-title mb-0" id="chat-title">💬 Task Chat</h5>
+                                <small class="text-muted" id="chat-subtitle">Select a task to start chatting</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="changeUsername()" title="Change Username">
+                                👤
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body p-0">
                         <div id="chat-messages" class="chat-container">
@@ -105,6 +139,16 @@
         let currentTaskId = null;
 
         function openTaskChat(taskId, taskTitle) {
+            // Get username if not set
+            if (!window.currentUsername) {
+                const username = prompt('Enter your username for the chat:');
+                if (!username) {
+                    alert('Username is required to join the chat');
+                    return;
+                }
+                window.currentUsername = username.trim();
+            }
+
             // Close existing connection
             if (currentSocket) {
                 currentSocket.close();
@@ -114,7 +158,7 @@
             
             // Update chat header
             document.getElementById('chat-title').textContent = `💬 ${taskTitle}`;
-            document.getElementById('chat-subtitle').textContent = `Chat for Task #${taskId}`;
+            document.getElementById('chat-subtitle').textContent = `Chat for Task #${taskId} - ${window.currentUsername}`;
             
             // Clear previous messages
             const messagesContainer = document.getElementById('chat-messages');
@@ -129,7 +173,9 @@
 
             // Create WebSocket connection
             const wsScheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            currentSocket = new WebSocket(`${wsScheme}//${window.location.host}/ws/chat/${taskId}/`);
+            const wsUrl = `${wsScheme}//${window.location.host}/ws/chat/${taskId}/`;
+            console.log('Connecting to WebSocket:', wsUrl);
+            currentSocket = new WebSocket(wsUrl);
 
             currentSocket.onopen = function(e) {
                 console.log('Connected to chat for task:', taskId);
@@ -137,12 +183,20 @@
             };
 
             currentSocket.onmessage = function(e) {
+                console.log('Received message:', e.data);
                 const data = JSON.parse(e.data);
-                addMessageToChat(data.message, data.task_id);
+                
+                if (data.type === 'message') {
+                    addChatMessage(data.message, data.username, data.timestamp);
+                } else if (data.type === 'user_join') {
+                    addSystemMessage(`${data.username} joined the chat`);
+                } else if (data.type === 'user_leave') {
+                    addSystemMessage(`${data.username} left the chat`);
+                }
             };
 
             currentSocket.onclose = function(e) {
-                console.log('Chat connection closed');
+                console.log('Chat connection closed. Code:', e.code, 'Reason:', e.reason);
                 if (messagesContainer.children.length === 1) {
                     messagesContainer.innerHTML = '<div class="text-center text-warning"><small>⚠️ Connection closed</small></div>';
                 }
@@ -154,36 +208,74 @@
             };
         }
 
-        function addMessageToChat(message, taskId) {
+        function addChatMessage(message, username, timestamp) {
             const messagesContainer = document.getElementById('chat-messages');
             
-            // Clear connection status messages
+            // Clear connection status messages if they exist
             if (messagesContainer.children.length === 1 && 
-                messagesContainer.textContent.includes('Connected') || 
-                messagesContainer.textContent.includes('Connecting')) {
+                (messagesContainer.textContent.includes('Connected') || 
+                 messagesContainer.textContent.includes('Connecting'))) {
                 messagesContainer.innerHTML = '';
             }
 
             const messageElement = document.createElement('div');
-            messageElement.className = 'message';
+            const currentUser = getCurrentUsername(); // We'll need to implement this
+            const isOwnMessage = username === currentUser;
+            
+            messageElement.className = `message ${isOwnMessage ? 'own-message' : 'other-message'}`;
             messageElement.innerHTML = `
+                <div class="username">${username}</div>
                 <div>${message}</div>
-                <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                <div class="timestamp">${timestamp}</div>
             `;
             
             messagesContainer.appendChild(messageElement);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
+        function addSystemMessage(message) {
+            const messagesContainer = document.getElementById('chat-messages');
+            
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message system-message';
+            messageElement.innerHTML = `
+                <div>${message}</div>
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+            `;
+            
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function getCurrentUsername() {
+            // For now, we'll use a simple approach
+            // In a real app, you'd get this from the authenticated user
+            if (!window.currentUsername) {
+                window.currentUsername = prompt('Enter your username:') || 'Anonymous';
+            }
+            return window.currentUsername;
+        }
+
         function sendMessage() {
             const messageInput = document.getElementById('chat-message-input');
             const message = messageInput.value.trim();
             
+            console.log('Attempting to send message:', message);
+            console.log('Current socket state:', currentSocket ? currentSocket.readyState : 'No socket');
+            console.log('WebSocket.OPEN constant:', WebSocket.OPEN);
+            
             if (message && currentSocket && currentSocket.readyState === WebSocket.OPEN) {
+                console.log('Sending message via WebSocket...');
                 currentSocket.send(JSON.stringify({
                     'message': message
                 }));
                 messageInput.value = '';
+                console.log('Message sent successfully');
+            } else {
+                console.log('Cannot send message. Conditions not met:');
+                console.log('- Message:', message);
+                console.log('- Socket exists:', !!currentSocket);
+                console.log('- Socket ready:', currentSocket ? currentSocket.readyState === WebSocket.OPEN : false);
             }
         }
 
