@@ -76,7 +76,7 @@
                         <li class="list-group-item task-item d-flex justify-content-between align-items-center" 
                             data-task-id="{{ task.id }}" 
                             data-task-title="{{ task.title|escapejs }}" 
-                            onclick="openTaskChat({{ task.id }}, '{{ task.title|escapejs }}')" 
+
                             style="cursor: pointer;">
                             
                             <div class="d-flex align-items-center gap-3">
@@ -300,6 +300,18 @@
             if (e.key === 'Enter') {
                 sendMessage();
             }
+        });
+
+        // Add event listeners for task items
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskItems = document.querySelectorAll('.task-item');
+            taskItems.forEach(function(taskItem) {
+                taskItem.addEventListener('click', function() {
+                    const taskId = this.dataset.taskId;
+                    const taskTitle = this.dataset.taskTitle;
+                    openTaskChat(taskId, taskTitle);
+                });
+            });
         });
 
         // Clean up on page unload
