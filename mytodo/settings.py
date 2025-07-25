@@ -28,7 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1',
     'localhost',
-    os.getenv('RENDER_EXTERNAL_HOSTNAME', 'django-todo-app-nxgg.onrender.com'),]
+    'django-todo-app-nxgg.onrender.com']
 
 
 # Application definition
