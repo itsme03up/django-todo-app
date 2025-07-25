@@ -26,6 +26,10 @@
         .task-item:hover {
             background-color: #f8f9fa;
         }
+        .task-completed {
+            text-decoration: line-through;
+            color: gray;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -45,14 +49,16 @@
                 <ul class="list-group">
                     {% for task in tasks %}
                         <li class="list-group-item task-item d-flex justify-content-between align-items-center" 
-                            onclick="openTaskChat({{ task.id }}, '{{ task.title|escapejs }}')">
-                            <div class="d-flex align-items-center gap-2">
-                                <form action="{% url 'toggle_complete' task.id %}" method="post" onclick="event.stopPropagation()">
-                                    {% csrf_token %}
+                            data-task-id="{{ task.id }}" 
+                            data-task-title="{{ task.title|escapejs }}" 
                                     <input type="checkbox" onchange="this.form.submit()" {% if task.completed %}checked{% endif %}>
                                 </form>
 
-                                <span style="{% if task.completed %}text-decoration: line-through; color: gray;{% endif %}">
+                                <span class="{% if task.completed %}task-completed{% endif %}">
+                                    {{ task.title }}
+                                </span>
+                                <small class="text-muted">💬 Click to chat</small>
+                            </div>
                                     {{ task.title }}
                                 </span>
                                 <small class="text-muted">💬 Click to chat</small>
