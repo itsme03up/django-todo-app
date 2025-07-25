@@ -2,7 +2,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from django.contrib.auth.models import User
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -103,7 +102,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_username(self):
-        if self.user.is_authenticated:
+        if hasattr(self.user, 'is_authenticated') and self.user.is_authenticated:
             return self.user.username
         else:
             return f"Guest_{self.channel_name[-8:]}"  # Use last 8 chars of channel name as guest ID

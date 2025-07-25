@@ -256,6 +256,22 @@
             return window.currentUsername;
         }
 
+        function changeUsername() {
+            const newUsername = prompt('Enter new username:', window.currentUsername || '');
+            if (newUsername && newUsername.trim()) {
+                const oldUsername = window.currentUsername;
+                window.currentUsername = newUsername.trim();
+                
+                // Update the chat subtitle if chat is open
+                if (currentTaskId) {
+                    document.getElementById('chat-subtitle').textContent = 
+                        `Chat for Task #${currentTaskId} - ${window.currentUsername}`;
+                }
+                
+                console.log(`Username changed from ${oldUsername} to ${window.currentUsername}`);
+            }
+        }
+
         function sendMessage() {
             const messageInput = document.getElementById('chat-message-input');
             const message = messageInput.value.trim();
