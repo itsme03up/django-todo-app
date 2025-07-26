@@ -100,6 +100,11 @@ DATABASES = {
     }
 }
 
+# Use a writable directory for SQLite in production
+if not DEBUG:
+    import os
+    DATABASES['default']['NAME'] = '/opt/render/project/src/db.sqlite3'
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
