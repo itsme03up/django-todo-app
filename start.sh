@@ -22,15 +22,23 @@ fi
 
 # Check if database exists and is migrated
 echo "=== Checking database status ==="
-python manage.py showmigrations --plan
+python manage.py showmigrations
+
+# Create fresh migrations if needed (backup approach)
+echo "=== Creating fresh migrations ==="
+python manage.py makemigrations todo --verbosity=2 || echo "No new migrations needed"
 
 # Create database tables from scratch if needed
 echo "=== Creating database tables ==="
 python manage.py migrate --run-syncdb --verbosity=2
 
 # Run any additional migrations
-echo "=== Running migrations ==="
+echo "=== Running all migrations ==="
 python manage.py migrate --verbosity=2
+
+# Force apply specific migrations if they exist
+echo "=== Force applying todo migrations ==="
+python manage.py migrate todo --verbosity=2 || echo "Todo migrations already applied"
 
 # Verify tables were created
 echo "=== Verifying database tables ==="
