@@ -60,7 +60,7 @@ if os.path.exists(str(settings.DATABASES['default']['NAME'])):
 echo "=== Creating superuser if needed ==="
 python manage.py shell -c "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', 'admin')" || echo "Superuser creation skipped"
 
-# Start the server
-echo "=== Starting server with tables verification complete ==="
+# Start the server using gunicorn with uvicorn worker for WebSocket support
+echo "=== Starting server with WebSocket support ==="
 echo "Server will be available on port ${PORT:-8000}"
-exec daphne -b 0.0.0.0 -p ${PORT:-8000} mytodo.asgi:application
+exec gunicorn mytodo.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}
