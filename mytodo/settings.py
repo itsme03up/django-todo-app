@@ -26,24 +26,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-ix+421*!%8j4dd=(yce#w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [
-    '127.0.0.1',
-    'localhost',
-    'django-todo-app-nxgg.onrender.com',
-    '.onrender.com',  # Allow all Render subdomains
-]
-
-# Add any additional hosts from environment variable
-if 'RENDER_EXTERNAL_HOSTNAME' in os.environ:
-    ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
-
-# Add Railway domain if present
-if 'RAILWAY_PUBLIC_DOMAIN' in os.environ:
-    ALLOWED_HOSTS.append(os.environ['RAILWAY_PUBLIC_DOMAIN'])
-
-# Allow all hosts in production if ALLOWED_HOSTS_ALL is set
-if os.environ.get('ALLOWED_HOSTS_ALL') == 'True':
-    ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']  # 本番では適切に制限すべし
 
 
 # Application definition
@@ -90,8 +73,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mytodo.wsgi.application'
 
-# Use Channels as the ASGI backend
-ASGI_APPLICATION = "mytodo.asgi.application"
+ASGI_APPLICATION = 'mytodo.asgi.application'
+
+# チャネルレイヤー設定（今回は in-memory）
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 
 # Database
