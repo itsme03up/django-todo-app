@@ -2,6 +2,8 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+from .models import Message
+from django.contrib.auth.models import User
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -50,6 +52,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
         username = await self.get_username()
+
+        user = await self.get_user(username)
+        
+        # Save message to database
+        await self.save_message(user, self.task_id, message)
 
         # Send message to task-specific chat room
         await self.channel_layer.group_send(
@@ -106,6 +113,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return self.user.username
         else:
             return f"Guest_{self.channel_name[-8:]}"  # Use last 8 chars of channel name as guest ID
+
+    @database_sync_to_async
+    def get_user(self, username):
+        return User.objects.get(username=username)
+
+    @database_sync_to_async
+    def save_message(self, user, room, message):
+        Message.objects.create(user=user, room=room, content=message)
 
     def get_timestamp(self):
         import datetime
