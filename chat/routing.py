@@ -1,9 +1,9 @@
 # chat/routing.py
 
-from django.urls import path
+from django.urls import re_path
 from . import consumers
 
 websocket_urlpatterns = [
-    path("ws/chat/<int:task_id>/", consumers.ChatConsumer.as_asgi()),
+    re_path(r'ws/chat/(?P<task_id>\w+)/$', consumers.ChatConsumer.as_asgi()),
 ]
 # Define WebSocket routes for task-specific chat rooms
