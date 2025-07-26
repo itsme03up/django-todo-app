@@ -37,6 +37,10 @@ ALLOWED_HOSTS = [
 if 'RENDER_EXTERNAL_HOSTNAME' in os.environ:
     ALLOWED_HOSTS.append(os.environ['RENDER_EXTERNAL_HOSTNAME'])
 
+# Add Railway domain if present
+if 'RAILWAY_PUBLIC_DOMAIN' in os.environ:
+    ALLOWED_HOSTS.append(os.environ['RAILWAY_PUBLIC_DOMAIN'])
+
 # Allow all hosts in production if ALLOWED_HOSTS_ALL is set
 if os.environ.get('ALLOWED_HOSTS_ALL') == 'True':
     ALLOWED_HOSTS = ['*']
@@ -93,13 +97,23 @@ ASGI_APPLICATION = "mytodo.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Default to local sqlite3
+DB_PATH = BASE_DIR / 'db.sqlite3'
+
 # Render's persistent disk path
-RENDER_DB_PATH = '/opt/render/project/src/db.sqlite3'
+if 'RENDER' in os.environ:
+    DB_PATH = '/opt/render/project/src/db.sqlite3'
+# Railway's persistent disk path (assumes a volume is mounted at /data)
+elif 'RAILWAY_ENVIRONMENT' in os.environ:
+    data_dir = Path('/data')
+    if data_dir.is_dir():
+        DB_PATH = data_dir / 'db.sqlite3'
+
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': RENDER_DB_PATH if 'RENDER' in os.environ else BASE_DIR / 'db.sqlite3',
+        'NAME': DB_PATH,
     }
 }
 

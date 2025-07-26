@@ -8,6 +8,9 @@ pip install -r requirements.txt
 echo "Checking Django installation..."
 python -c "import django; print(f'Django version: {django.get_version()}')"
 
+echo "Running database migrations..."
+python manage.py migrate
+
 echo "Collecting static files..."
 python manage.py collectstatic --no-input
 
