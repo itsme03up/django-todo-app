@@ -1,11 +1,9 @@
 services:
   - type: web
     name: django-todo-app
-    runtime: python3
-    buildCommand: "./build.sh"
-    startCommand: "./start.sh"
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn mytodo.asgi:application -k uvicorn.workers.UvicornWorker"
     envVars:
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DEBUG
-        value: "False"
+      - key: PYTHON_VERSION
+        value: 3.11.4
