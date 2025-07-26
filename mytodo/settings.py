@@ -13,13 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 
-# Try to import dj_database_url for production database configuration
-try:
-    import dj_database_url
-    HAS_DJ_DATABASE_URL = True
-except ImportError:
-    HAS_DJ_DATABASE_URL = False
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
