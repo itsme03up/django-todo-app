@@ -1,8 +1,3 @@
-databases:
-  - name: django-todo-db
-    databaseName: django_todo_app
-    user: django_todo_user
-
 services:
   - type: web
     name: django-todo-app
@@ -10,13 +5,7 @@ services:
     buildCommand: "./build.sh"
     startCommand: "daphne -b 0.0.0.0 -p 8000 mytodo.asgi:application"
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: django-todo-db
-          property: connectionString
       - key: SECRET_KEY
         generateValue: true
-      - key: WEB_CONCURRENCY
-        value: 4
       - key: DEBUG
         value: False
