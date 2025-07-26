@@ -93,18 +93,15 @@ ASGI_APPLICATION = "mytodo.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Render's persistent disk path
+RENDER_DB_PATH = '/opt/render/project/src/db.sqlite3'
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': RENDER_DB_PATH if 'RENDER' in os.environ else BASE_DIR / 'db.sqlite3',
     }
 }
-
-# Use a writable directory for SQLite in production
-if not DEBUG:
-    import os
-    DATABASES['default']['NAME'] = '/opt/render/project/src/db.sqlite3'
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
