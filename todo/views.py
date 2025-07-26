@@ -1,18 +1,27 @@
 from django.shortcuts import render, redirect,  get_object_or_404
 from .models import Task
-
-# Create your views here.
+from django.db import connection
 from django.http import HttpResponse
 
-def index(request):
-    tasks = Task.objects.all()
+# Create your views here.
 
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        if title:
-            Task.objects.create(title=title)
-        return redirect('/')
-    return render(request, 'todo/index.html', {'tasks': tasks})
+def index(request):
+    try:
+        # Check if database tables exist
+        table_names = connection.introspection.table_names()
+        if 'todo_task' not in table_names:
+            return HttpResponse("Database not properly migrated. Tables available: " + str(table_names), status=500)
+        
+        tasks = Task.objects.all()
+
+        if request.method == 'POST':
+            title = request.POST.get('title')
+            if title:
+                Task.objects.create(title=title)
+            return redirect('/')
+        return render(request, 'todo/index.html', {'tasks': tasks})
+    except Exception as e:
+        return HttpResponse(f"Database error: {str(e)}", status=500)
 
 def delete_task(request, task_id):
     task = get_object_or_404(Task, id=task_id)
